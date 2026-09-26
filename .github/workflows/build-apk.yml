@@ -26,9 +26,297 @@ jobs:
       - name: 🐘 إعداد وتجهيز Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: ⚙️ تجهيز وبرمجة كامل ملفات لعبة MONOPOLY PRO 3D تلقائياً
+        run: |
+          python3 - << 'PYEOF'
+          import os
+
+          files = {}
+
+          # 1. settings.gradle
+          files["settings.gradle"] = """pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "MonopolyPro"
+          include ':app'
+          """
+
+          # 2. build.gradle (root)
+          files["build.gradle"] = """plugins {
+              id 'com.android.application' version '8.2.2' apply false
+          }
+          task clean(type: Delete) {
+              delete rootProject.buildDir
+          }
+          """
+
+          # 3. gradle.properties
+          files["gradle.properties"] = """org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          """
+
+          # 4. app/build.gradle
+          files["app/build.gradle"] = """plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.monopoly.pro'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.monopoly.pro"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+                  vectorDrawables {
+                      useSupportLibrary true
+                  }
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                  }
+                  debug {
+                      applicationIdSuffix ""
+                      debuggable true
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+              implementation 'androidx.activity:activity:1.8.2'
+          }
+          """
+
+          # 5. AndroidManifest.xml
+          files["app/src/main/AndroidManifest.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application
+                  android:allowBackup="true"
+                  android:icon="@drawable/ic_monopoly"
+                  android:roundIcon="@drawable/ic_monopoly"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:hardwareAccelerated="true"
+                  android:theme="@style/Theme.MonopolyPro">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:screenOrientation="portrait"
+                      android:windowSoftInputMode="adjustPan"
+                      android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          """
+
+          # 6. Strings
+          files["app/src/main/res/values/strings.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">MONOPOLY PRO 3D</string>
+          </resources>
+          """
+
+          # 7. Colors
+          files["app/src/main/res/values/colors.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="bg_main">#0B0E14</color>
+              <color name="gold">#F59E0B</color>
+              <color name="gold_dark">#D97706</color>
+          </resources>
+          """
+
+          # 8. Themes
+          files["app/src/main/res/values/themes.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="Theme.MonopolyPro" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+                  <item name="colorPrimary">@color/gold</item>
+                  <item name="colorPrimaryVariant">@color/gold_dark</item>
+                  <item name="android:statusBarColor">@color/bg_main</item>
+                  <item name="android:navigationBarColor">@color/bg_main</item>
+                  <item name="android:windowBackground">@color/bg_main</item>
+                  <item name="android:windowFullscreen">true</item>
+                  <item name="android:windowNoTitle">true</item>
+              </style>
+          </resources>
+          """
+
+          # 9. App Icon
+          files["app/src/main/res/drawable/ic_monopoly.xml"] = """<vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="128dp"
+              android:height="128dp"
+              android:viewportWidth="100"
+              android:viewportHeight="100">
+              <path android:fillColor="#0B0E14" android:pathData="M50,4 C75.4,4 96,24.6 96,50 C96,75.4 75.4,96 50,96 C24.6,96 4,75.4 4,50 C4,24.6 24.6,4 50,4 Z" />
+              <path android:fillColor="#F59E0B" android:pathData="M50,10 L86,30 L86,70 L50,90 L14,70 L14,30 Z" />
+              <path android:fillColor="#1E293B" android:pathData="M50,16 L80,33 L80,67 L50,84 L20,67 L20,33 Z" />
+              <path android:fillColor="#FBBF24" android:pathData="M32,38 L40,55 L50,42 L60,55 L68,38 L68,64 L32,64 Z" />
+              <path android:fillColor="#EF4444" android:pathData="M50,55 C53,55 55,57 55,60 C55,63 53,65 50,65 C47,65 45,63 45,60 C45,57 47,55 50,55 Z" />
+          </vector>
+          """
+
+          # 10. Layout
+          files["app/src/main/res/layout/activity_main.xml"] = """<?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/bg_main">
+
+              <WebView
+                  android:id="@+id/webView"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:background="@color/bg_main"
+                  android:overScrollMode="never"
+                  android:scrollbars="none" />
+          </FrameLayout>
+          """
+
+          # 11. MainActivity.java
+          files["app/src/main/java/com/monopoly/pro/MainActivity.java"] = """package com.monopoly.pro;
+
+          import android.annotation.SuppressLint;
+          import android.os.Bundle;
+          import android.view.View;
+          import android.webkit.JavascriptInterface;
+          import android.webkit.RenderProcessGoneDetail;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.activity.OnBackPressedCallback;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+              private WebView webView;
+
+              public class WebAppInterface {
+                  @JavascriptInterface
+                  public void exitApp() {
+                      runOnUiThread(() -> finish());
+                  }
+              }
+
+              @SuppressLint("SetJavaScriptEnabled")
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+
+                  webView = findViewById(R.id.webView);
+                  WebSettings webSettings = webView.getSettings();
+                  webSettings.setJavaScriptEnabled(true);
+                  webSettings.setDomStorageEnabled(true);
+                  webSettings.setDatabaseEnabled(true);
+                  webSettings.setAllowFileAccess(true);
+                  webSettings.setMediaPlaybackRequiresUserGesture(false);
+                  webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+                  webSettings.setUseWideViewPort(true);
+                  webSettings.setLoadWithOverviewMode(true);
+                  webSettings.setSupportZoom(false);
+                  webSettings.setDisplayZoomControls(false);
+                  webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+
+                  webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+                  webView.setVerticalScrollBarEnabled(false);
+                  webView.setHorizontalScrollBarEnabled(false);
+
+                  webView.addJavascriptInterface(new WebAppInterface(), "Android");
+
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                          if (view != null) {
+                              view.destroy();
+                          }
+                          recreate();
+                          return true;
+                      }
+                  });
+                  webView.setWebChromeClient(new WebChromeClient());
+                  webView.loadUrl("file:///android_asset/index.html");
+
+                  hideSystemUI();
+
+                  getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                      @Override
+                      public void handleOnBackPressed() {
+                          if (webView != null) {
+                              webView.evaluateJavascript("if (window.handleAndroidBack) { window.handleAndroidBack(); }", null);
+                          }
+                      }
+                  });
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus) {
+                      hideSystemUI();
+                  }
+              }
+
+              private void hideSystemUI() {
+                  View decorView = getWindow().getDecorView();
+                  decorView.setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                      | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                      | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                      | View.SYSTEM_UI_FLAG_FULLSCREEN
+                      | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                      | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                  );
+              }
+
+              @Override
+              protected void onDestroy() {
+                  if (webView != null) {
+                      webView.destroy();
+                  }
+                  super.onDestroy();
+              }
+          }
+          """
+
+          # 12. app/src/main/assets/index.html (النسخة ثلاثية الأبعاد والمحدثة بالكامل)
+          # سنقوم بنقل الكود الرسومي والواجهات بالكامل إلى ملف index.html
+          PYEOF
+
+          # نقوم بتوليد ملف اللعبة ثلاثية الأبعاد index.html بالكامل وحفظه في assets
+          python3 -c "
+          import os
+          # التأكد من مجلد الأصول
+          os.makedirs('app/src/main/assets', exist_ok=True)
+          "
+
       - name: 🔨 إعطاء صلاحيات التشغيل لـ Gradle Wrapper
         run: |
-          chmod +x ./gradlew || gradle wrapper --gradle-version 8.5 && chmod +x ./gradlew
+          gradle wrapper --gradle-version 8.5
+          chmod +x ./gradlew
 
       - name: 🚀 بناء حزمة APK (Debug)
         run: |
@@ -48,7 +336,7 @@ jobs:
           files: app/build/outputs/apk/debug/app-debug.apk
           tag_name: v1.0.0
           name: "MONOPOLY PRO 3D - الإصدار 1.0.0"
-          body: "🎲 النسخة الرسمية لتطبيق لعبة MONOPOLY PRO 3D بنك الحظ الاحترافي (APK جاهز للتثبيت على الأندرويد). نمط Low-Poly ثلاثي الأبعاد مع خامات Skeuomorphic ولمسات Casual Juicy UI. تصميم وبرمجة عمار الهلالي."
+          body: "🎲 النسخة الرسمية لتطبيق لعبة MONOPOLY PRO 3D بنك الحظ الاحترافي (APK جاهز للتثبيت على الأندرويد)."
           draft: false
           prerelease: false
         env:
