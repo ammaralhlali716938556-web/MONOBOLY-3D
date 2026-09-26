@@ -1,0 +1,55 @@
+name: Build MONOPOLY PRO 3D APK
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: 🎲 بناء تطبيق MONOPOLY PRO 3D (APK)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 جلب الكود
+        uses: actions/checkout@v4
+
+      - name: ☕ تثبيت بيئة جافا (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🐘 إعداد وتجهيز Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 🔨 إعطاء صلاحيات التشغيل لـ Gradle Wrapper
+        run: |
+          chmod +x ./gradlew || gradle wrapper --gradle-version 8.5 && chmod +x ./gradlew
+
+      - name: 🚀 بناء حزمة APK (Debug)
+        run: |
+          ./gradlew assembleDebug --stacktrace
+
+      - name: 📤 رفع ملف APK كعنصر قابل للتحميل (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonopolyPro-3D-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: 🌟 إنشاء إصدار تلقائي على GitHub (Release)
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+          tag_name: v1.0.0
+          name: "MONOPOLY PRO 3D - الإصدار 1.0.0"
+          body: "🎲 النسخة الرسمية لتطبيق لعبة MONOPOLY PRO 3D بنك الحظ الاحترافي (APK جاهز للتثبيت على الأندرويد). نمط Low-Poly ثلاثي الأبعاد مع خامات Skeuomorphic ولمسات Casual Juicy UI. تصميم وبرمجة عمار الهلالي."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
